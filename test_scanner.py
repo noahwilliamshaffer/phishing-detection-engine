@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 PhishSentry Test Script
 Simple test script to demonstrate URL scanning functionality.
@@ -7,6 +8,12 @@ Simple test script to demonstrate URL scanning functionality.
 import os
 import sys
 import json
+
+# Set UTF-8 encoding for Windows console
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'ignore')
+
 from modules.url_scanner import URLScanner
 from modules.reputation_engine import ReputationEngine
 
@@ -21,16 +28,16 @@ def test_url_scan(url):
         scanner = URLScanner()
         reputation_engine = ReputationEngine()
         
-        print("🔍 Starting URL scan...")
+        print("[*] Starting URL scan...")
         scan_result = scanner.scan_url(url)
         
-        print("📊 Calculating reputation score...")
+        print("[*] Calculating reputation score...")
         reputation_score = reputation_engine.calculate_score(scan_result)
         
         # Print basic results
-        print(f"\n📋 SCAN RESULTS:")
+        print(f"\n[SCAN RESULTS]")
         print(f"   URL: {scan_result.get('url', 'N/A')}")
-        print(f"   Accessible: {'✅' if scan_result.get('accessible') else '❌'}")
+        print(f"   Accessible: {'YES' if scan_result.get('accessible') else 'NO'}")
         print(f"   Status Code: {scan_result.get('status_code', 'N/A')}")
         print(f"   Response Time: {scan_result.get('response_time', 0):.2f}s")
         
@@ -38,15 +45,15 @@ def test_url_scan(url):
         risk_level = reputation_score.get('risk_level', 'unknown')
         total_score = reputation_score.get('total_score', 0)
         
-        risk_emoji = {
-            'low': '🟢',
-            'medium': '🟡', 
-            'high': '🟠',
-            'critical': '🔴'
-        }.get(risk_level, '⚪')
+        risk_indicator = {
+            'low': '[LOW]',
+            'medium': '[MEDIUM]', 
+            'high': '[HIGH]',
+            'critical': '[CRITICAL]'
+        }.get(risk_level, '[UNKNOWN]')
         
-        print(f"\n🛡️ REPUTATION ASSESSMENT:")
-        print(f"   Risk Level: {risk_emoji} {risk_level.upper()}")
+        print(f"\n[REPUTATION ASSESSMENT]")
+        print(f"   Risk Level: {risk_indicator} {risk_level.upper()}")
         print(f"   Total Score: {total_score:.1f}/10")
         
         # Print threats if any
@@ -60,7 +67,7 @@ def test_url_scan(url):
             print(f"   Pattern Threats: {', '.join(pattern_threats)}")
         
         # Print detailed scores
-        print(f"\n📈 SCORE BREAKDOWN:")
+        print(f"\n[SCORE BREAKDOWN]")
         print(f"   Base Score: {reputation_score.get('base_score', 0):.1f}/4")
         print(f"   Content Score: {reputation_score.get('content_score', 0):.1f}/4")
         print(f"   Security Score: {reputation_score.get('security_score', 0):.1f}/2")
@@ -70,7 +77,7 @@ def test_url_scan(url):
         # Print pattern analysis if available
         pattern_analysis = scan_result.get('pattern_analysis', {})
         if pattern_analysis:
-            print(f"\n🔍 PATTERN ANALYSIS:")
+            print(f"\n[PATTERN ANALYSIS]")
             
             url_patterns = pattern_analysis.get('url_patterns', {})
             if url_patterns:
@@ -78,21 +85,21 @@ def test_url_scan(url):
                 for pattern, value in url_patterns.items():
                     if value:
                         if isinstance(value, bool):
-                            print(f"     • {pattern.replace('_', ' ').title()}: ⚠️")
+                            print(f"     * {pattern.replace('_', ' ').title()}: YES")
                         else:
-                            print(f"     • {pattern.replace('_', ' ').title()}: {value}")
+                            print(f"     * {pattern.replace('_', ' ').title()}: {value}")
             
             content_patterns = pattern_analysis.get('content_patterns', {})
             if content_patterns:
                 print(f"   Content Patterns:")
                 for pattern, value in content_patterns.items():
                     if value and value > 0:
-                        print(f"     • {pattern.replace('_', ' ').title()}: {value}")
+                        print(f"     * {pattern.replace('_', ' ').title()}: {value}")
         
         # Print content analysis if available
         if scan_result.get('accessible') and scan_result.get('content_analysis'):
             content = scan_result['content_analysis']
-            print(f"\n🔍 CONTENT ANALYSIS:")
+            print(f"\n[CONTENT ANALYSIS]")
             print(f"   Title: {content.get('title', 'N/A')[:50]}")
             print(f"   Forms: {'Yes' if content.get('has_forms') else 'No'}")
             print(f"   Login Forms: {content.get('login_forms', 0)}")
@@ -103,41 +110,40 @@ def test_url_scan(url):
         # Print security indicators
         if scan_result.get('security_indicators'):
             security = scan_result['security_indicators']
-            print(f"\n🔒 SECURITY INDICATORS:")
-            print(f"   HTTPS: {'✅' if security.get('https') else '❌'}")
-            print(f"   Security Headers: {'✅' if security.get('has_security_headers') else '❌'}")
+            print(f"\n[SECURITY INDICATORS]")
+            print(f"   HTTPS: {'YES' if security.get('https') else 'NO'}")
+            print(f"   Security Headers: {'YES' if security.get('has_security_headers') else 'NO'}")
             print(f"   URL Length: {security.get('url_length', 0)} chars")
             print(f"   Subdomains: {security.get('subdomain_count', 0)}")
             if security.get('suspicious_tld'):
-                print(f"   Suspicious TLD: ⚠️")
+                print(f"   Suspicious TLD: YES")
         
         # Print redirects if any
         redirects = scan_result.get('redirects', [])
         if redirects:
-            print(f"\n🔄 REDIRECTS ({len(redirects)}):")
+            print(f"\n[REDIRECTS] ({len(redirects)})")
             for i, redirect in enumerate(redirects[:3], 1):  # Show first 3
-                print(f"   {i}. {redirect.get('status', 'N/A')} → {redirect.get('to', 'N/A')[:60]}")
+                print(f"   {i}. {redirect.get('status', 'N/A')} -> {redirect.get('to', 'N/A')[:60]}")
             if len(redirects) > 3:
                 print(f"   ... and {len(redirects) - 3} more")
         
         return True
         
     except Exception as e:
-        print(f"❌ ERROR: {str(e)}")
+        print(f"[ERROR] {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def main():
     """Main test function."""
-    print("🛡️  PhishSentry URL Scanner Test")
-    print("================================")
+    print("PhishSentry URL Scanner Test")
+    print("="*60)
     
     # Test URLs - including some potentially suspicious ones for demonstration
     test_urls = [
         "https://google.com",
-        "https://github.com",
-        "http://example.com",
-        "https://stackoverflow.com",
-        "https://bit.ly/3example"  # URL shortener example
+        "https://github.com"
     ]
     
     # Allow custom URL from command line
@@ -159,8 +165,8 @@ def main():
     print(f"TEST SUMMARY: {success_count}/{total_count} URLs scanned successfully")
     print(f"{'='*60}")
     
-    print(f"\n📝 NOTE: This tool is for educational and security research purposes.")
+    print(f"\nNOTE: This tool is for educational and security research purposes.")
     print(f"Always verify results with multiple sources and use responsibly.")
 
 if __name__ == "__main__":
-    main() 
+    main()
